@@ -1,80 +1,80 @@
-// pages/login.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 
-const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-4fzx.onrender.com';
-
-export default function Login() {
+export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('org@gmail.com'); // для теста
-  const [password, setPassword] = useState('1234');     // для теста
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  async function handleSubmit(e) {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
 
     try {
-      const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-        email,
-        password,
-      });
-      const token = response.data.data.access_token;
-      localStorage.setItem('directus_token', token);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/auth/login`,
+        {
+          email,
+          password,
+        }
+      );
+
+      const { access_token } = response.data;
+
+      localStorage.setItem('directus_token', access_token);
+      setError('');
       router.push('/dashboard');
     } catch (err) {
-      setError('Неверный логин или пароль');
-    } finally {
-      setLoading(false);
+      console.error('Login error:', err);
+      setError('Невірна пошта або пароль');
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-80">
-        <h2 className="text-2xl mb-6 text-center font-semibold">Вход для организатора</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-semibold mb-6 text-center">Вхід для організатора</h1>
 
-        <label className="block mb-2">
-          Email:
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full border rounded px-3 py-2"
-            required
-          />
-        </label>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block mb-1">Email</label>
+            <input
+              type="email"
+              className="w-full border px-3 py-2 rounded"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="org@gmail.com"
+              required
+            />
+          </div>
 
-        <label className="block mb-4">
-          Пароль:
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full border rounded px-3 py-2"
-            required
-          />
-        </label>
+          <div>
+            <label className="block mb-1">Пароль</label>
+            <input
+              type="password"
+              className="w-full border px-3 py-2 rounded"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="1234"
+              required
+            />
+          </div>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+          {error && <p className="text-red-500">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'Вход...' : 'Войти'}
-        </button>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          >
+            Увійти
+          </button>
+        </form>
 
-        <p className="mt-4 text-xs text-gray-500">
-          Тестовые данные: <br />
-          Email: <b>org@gmail.com</b><br />
-          Пароль: <b>1234</b>
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          Тестовий вхід: org@gmail.com / 1234
         </p>
-      </form>
+      </div>
     </div>
   );
 }
