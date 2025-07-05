@@ -29,7 +29,7 @@ export default function Players() {
         <Link href="/">
           <a className="text-blue-600 hover:underline">Главная</a>
         </Link>
-        <Link href="/add-player">
+        <Link href="/dashboard/add-player">
           <a className="text-blue-600 hover:underline">Добавить игрока</a>
         </Link>
       </nav>
