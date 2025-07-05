@@ -1,49 +1,53 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import axios from "axios";
 
-const API_URL = 'https://directus-4fzx.onrender.com';
+const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || "https://directus-4fzx.onrender.com";
 
 export default function Players() {
   const [players, setPlayers] = useState([]);
-  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Получаем игроков
-    axios.get(`${API_URL}/items/players`)
-      .then(res => setPlayers(res.data.data))
-      .catch(err => console.error('Ошибка получения игроков:', err));
-
-    // Проверяем, залогинен ли организатор
-    const token = localStorage.getItem('directus_token');
-    if (token) setIsOrganizer(true);
+    async function fetchPlayers() {
+      try {
+        const response = await axios.get(`${DIRECTUS_URL}/items/players`);
+        setPlayers(response.data.data || []);
+      } catch (error) {
+        console.error("Ошибка получения игроков:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPlayers();
   }, []);
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Список игроков</h1>
-
-      <p>
+    <div className="min-h-screen p-6 bg-gray-50">
+      <h1 className="text-3xl font-bold mb-6">Список игроков</h1>
+      <nav className="mb-6 space-x-4">
         <Link href="/">
-          <a>← На главную</a>
+          <a className="text-blue-600 hover:underline">Главная</a>
         </Link>
-      </p>
+        <Link href="/add-player">
+          <a className="text-blue-600 hover:underline">Добавить игрока</a>
+        </Link>
+      </nav>
 
-      {isOrganizer && (
-        <p>
-          <Link href="/dashboard/add-player">
-            <a>➕ Добавить игрока</a>
-          </Link>
-        </p>
-      )}
-
-      {players.length === 0 ? (
+      {loading ? (
         <p>Загрузка...</p>
+      ) : players.length === 0 ? (
+        <p>Игроков пока нет.</p>
       ) : (
-        <ul>
-          {players.map((p) => (
-            <li key={p.id}>
-              {p.name}
+        <ul className="space-y-2">
+          {players.map((player) => (
+            <li
+              key={player.id}
+              className="p-4 border rounded bg-white shadow-sm hover:shadow-md transition"
+            >
+              <p className="text-lg font-semibold">{player.name}</p>
+              {player.club && <p className="text-gray-600">Клуб: {player.club}</p>}
+              {/* Добавь другие поля по необходимости */}
             </li>
           ))}
         </ul>
