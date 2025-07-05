@@ -1,45 +1,22 @@
 // pages/dashboard.js
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('admin_token');
-    if (token !== 'ok') {
+    const token = localStorage.getItem('directus_token');
+    if (!token) {
       router.push('/login');
-    } else {
-      setAuthorized(true);
     }
-  }, []);
-
-  const handleCreateTournament = () => {
-    router.push('/create-tournament');
-  };
-
-  if (!authorized) return null;
+  }, [router]);
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Добро пожаловать в панель организатора!</h1>
-      <p>Вы можете создавать турниры и управлять ими.</p>
-
-      <button
-        onClick={handleCreateTournament}
-        style={{
-          padding: '1rem 2rem',
-          background: '#0070f3',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          marginTop: '1rem',
-          cursor: 'pointer'
-        }}
-      >
-        ➕ Создать турнир
-      </button>
+      <h1>Панель организатора</h1>
+      <p>Здесь можно будет создавать и управлять турнирами</p>
+      <p><a href="/create-tournament">Создать новый турнир</a></p>
     </div>
   );
 }
