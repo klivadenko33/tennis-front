@@ -1,123 +1,121 @@
-// pages/dashboard/tournaments/[id].js
-
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import axios from 'axios';
-import Link from 'next/link';
 
-const API_URL = 'https://directus-4fzx.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL;
 
-export default function TournamentPage() {
+export default function TournamentDashboard() {
   const router = useRouter();
   const { id } = router.query;
 
   const [players, setPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
-  const [player1, setPlayer1] = useState('');
-  const [player2, setPlayer2] = useState('');
   const [score, setScore] = useState('');
+  const [player_1, setPlayer_1] = useState('');
+  const [player_2, setPlayer_2] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!id) return;
 
-    const token = localStorage.getItem('directus_token');
-    if (!token) return;
+    const fetchData = async () => {
+      try {
+        const playersRes = await axios.get(`${API_URL}/items/players`);
+        setPlayers(playersRes.data.data);
 
-    // Загрузка игроков
-    axios.get(`${API_URL}/items/players`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(res => setPlayers(res.data.data))
-    .catch(err => console.error('Ошибка загрузки игроков:', err));
+        const matchesRes = await axios.get(
+          `${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player_1.name,player_2.name`
+        );
+        setMatches(matchesRes.data.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-    // Загрузка матчей с именами игроков
-    axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(res => setMatches(res.data.data))
-    .catch(err => console.error('Ошибка загрузки матчей:', err));
-
+    fetchData();
   }, [id]);
 
   const addMatch = async () => {
-    if (!player1 || !player2 || !score || player1 === player2) {
-      alert('Пожалуйста, выберите разных игроков и введите счёт');
-      return;
-    }
-
-    const token = localStorage.getItem('directus_token');
-
     try {
-      const payload = {
+      await axios.post(`${API_URL}/items/matches`, {
         tournament: parseInt(id),
-        player1: parseInt(player1),
-        player2: parseInt(player2),
+        player_1: parseInt(player_1),
+        player_2: parseInt(player_2),
         score,
-      };
-
-      await axios.post(`${API_URL}/items/matches`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Перезагрузка матчей после добавления
-      const res = await axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setMatches(res.data.data);
-      setPlayer1('');
-      setPlayer2('');
+      setPlayer_1('');
+      setPlayer_2('');
       setScore('');
+      setError(null);
+
+      // Обновим список матчей
+      const matchesRes = await axios.get(
+        `${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player_1.name,player_2.name`
+      );
+      setMatches(matchesRes.data.data);
     } catch (err) {
-      console.error("Ошибка добавления матча:", err.response?.data?.errors || err.message);
-      alert('Ошибка добавления матча. Подробности в консоли.');
+      console.error(err);
+      setError('Ошибка при добавлении матча');
     }
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Управление турниром #{id}</h1>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Панель турнира #{id}</h1>
 
-      <p><Link href="/dashboard"><a>← Назад в панель организатора</a></Link></p>
+      <a href="/" className="text-blue-500 underline mb-4 block">
+        ← Вернуться на главную
+      </a>
 
-      <h2>Добавить матч</h2>
-      <div>
-        <select value={player1} onChange={(e) => setPlayer1(e.target.value)}>
-          <option value="">Выберите Игрока 1</option>
-          {players.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">Добавить матч</h2>
 
-        <select value={player2} onChange={(e) => setPlayer2(e.target.value)}>
-          <option value="">Выберите Игрока 2</option>
-          {players.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <div className="flex flex-col gap-2 mb-2">
+          <select value={player_1} onChange={(e) => setPlayer_1(e.target.value)} className="p-2 border">
+            <option value="">Выбери игрока 1</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
 
-        <input
-          type="text"
-          placeholder="Счёт (например: 6-3, 6-4)"
-          value={score}
-          onChange={(e) => setScore(e.target.value)}
-        />
+          <select value={player_2} onChange={(e) => setPlayer_2(e.target.value)} className="p-2 border">
+            <option value="">Выбери игрока 2</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
 
-        <button onClick={addMatch}>Добавить матч</button>
+          <input
+            type="text"
+            placeholder="Счёт (например 6-3, 6-4)"
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+            className="p-2 border"
+          />
+
+          <button onClick={addMatch} className="bg-blue-600 text-white px-4 py-2 rounded">
+            Добавить матч
+          </button>
+
+          {error && <p className="text-red-500">{error}</p>}
+        </div>
       </div>
 
-      <h2>Список матчей</h2>
-      {matches.length === 0 ? (
-        <p>Матчи пока не добавлены</p>
-      ) : (
-        <ul>
-          {matches.map(match => (
-            <li key={match.id}>
-              {match.player1?.name || 'Игрок 1'} vs {match.player2?.name || 'Игрок 2'} — Счёт: {match.score}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Матчи</h2>
+        {matches.length === 0 ? (
+          <p>Матчей пока нет</p>
+        ) : (
+          <ul className="space-y-2">
+            {matches.map((match) => (
+              <li key={match.id} className="border p-2 rounded">
+                {match.player_1?.name || 'Игрок 1'} vs {match.player_2?.name || 'Игрок 2'} — <strong>{match.score}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
