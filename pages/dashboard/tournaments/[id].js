@@ -20,10 +20,12 @@ export default function TournamentDetails() {
     const token = localStorage.getItem('directus_token');
     if (!token || !id) return;
 
+    // Получаем игроков
     axios.get(`${API_URL}/items/players`)
       .then(res => setPlayers(res.data.data));
 
-    axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}`, {
+    // Получаем матчи + вложенные имена игроков
+    axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => setMatches(res.data.data));
@@ -38,20 +40,23 @@ export default function TournamentDetails() {
     const token = localStorage.getItem('directus_token');
 
     try {
+      // Добавляем матч
       await axios.post(`${API_URL}/items/matches`, {
-        tournament: id,
-        player1,
-        player2,
+        tournament: parseInt(id),
+        player1: parseInt(player1),
+        player2: parseInt(player2),
         score
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      // Очищаем форму
       setScore('');
       setPlayer1('');
       setPlayer2('');
+
       // Перезагружаем список матчей
-      const res = await axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}`, {
+      const res = await axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMatches(res.data.data);
@@ -66,6 +71,7 @@ export default function TournamentDetails() {
       <h1>Управление турниром #{id}</h1>
 
       <p><Link href="/dashboard"><a>← Назад в панель</a></Link></p>
+      <p><Link href="/"><a>🏠 На главную</a></Link></p>
 
       <h2>Добавить матч</h2>
       <div>
@@ -106,7 +112,7 @@ export default function TournamentDetails() {
         <ul>
           {matches.map(m => (
             <li key={m.id}>
-              {players.find(p => p.id === m.player1)?.name} vs {players.find(p => p.id === m.player2)?.name} — <b>{m.score}</b>
+              {m.player1?.name || 'Игрок 1'} vs {m.player2?.name || 'Игрок 2'} — <b>{m.score}</b>
             </li>
           ))}
         </ul>
