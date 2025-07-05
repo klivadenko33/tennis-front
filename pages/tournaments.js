@@ -1,4 +1,3 @@
-// pages/tournaments.js
 import axios from 'axios';
 import Link from 'next/link';
 
@@ -8,6 +7,11 @@ export default function Tournaments({ tournaments }) {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Список турниров</h1>
+      <p>
+        <Link href="/">
+          <a>← На главную</a>
+        </Link>
+      </p>
       {tournaments.length === 0 && <p>Турниров пока нет.</p>}
       <ul>
         {tournaments.map(t => (
@@ -24,10 +28,9 @@ export default function Tournaments({ tournaments }) {
   );
 }
 
-// Получаем данные на сервере (SSR)
 export async function getServerSideProps() {
   try {
-    const res = await axios.get(`${API_URL}/items/tournaments?sort=start_date`);
+    const res = await axios.get(`${API_URL}/items/tournaments`);
     return {
       props: {
         tournaments: res.data.data || [],
