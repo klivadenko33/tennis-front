@@ -1,80 +1,53 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import axios from 'axios';
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
+    setError('');
 
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/auth/login`,
-        {
-          email,
-          password,
-        }
-      );
-
-      const { access_token } = response.data;
-
-      localStorage.setItem('directus_token', access_token);
-      setError('');
+    // Простейшая проверка
+    if (email === 'org@gmail.com' && password === '1234') {
+      localStorage.setItem('auth', 'true');
       router.push('/dashboard');
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Невірна пошта або пароль');
+    } else {
+      setError('Неверный логин или пароль');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-6 text-center">Вхід для організатора</h1>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block mb-1">Email</label>
-            <input
-              type="email"
-              className="w-full border px-3 py-2 rounded"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="org@gmail.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Пароль</label>
-            <input
-              type="password"
-              className="w-full border px-3 py-2 rounded"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="1234"
-              required
-            />
-          </div>
-
-          {error && <p className="text-red-500">{error}</p>}
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-          >
-            Увійти
-          </button>
-        </form>
-
-        <p className="text-sm text-gray-500 mt-4 text-center">
-          Тестовий вхід: org@gmail.com / 1234
-        </p>
-      </div>
+    <div className="max-w-md mx-auto mt-20 p-4 border rounded shadow">
+      <h1 className="text-2xl mb-4">Вход для организатора</h1>
+      <p className="mb-4 text-gray-600">
+        Тестовые данные для входа: <b>org@gmail.com</b> / <b>1234</b>
+      </p>
+      <form onSubmit={handleLogin} className="flex flex-col gap-3">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="border p-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Пароль"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="border p-2 rounded"
+        />
+        <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+          Войти
+        </button>
+      </form>
+      {error && <p className="text-red-600 mt-2">{error}</p>}
     </div>
   );
 }
