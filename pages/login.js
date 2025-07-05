@@ -1,7 +1,7 @@
-// pages/login.js
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 const API_URL = 'https://directus-4fzx.onrender.com';
 
@@ -25,6 +25,8 @@ export default function Login() {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Вход для организаторов</h1>
+      <p><b>Тестовый логин:</b> org@gmail.com</p>
+      <p><b>Пароль:</b> 1234</p>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -32,7 +34,7 @@ export default function Login() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
-          style={{ display: 'block', marginBottom: '1rem', padding: '0.5rem' }}
+          style={{ display: 'block', marginBottom: '1rem', padding: '0.5rem', width: '300px' }}
         />
         <input
           type="password"
@@ -40,10 +42,15 @@ export default function Login() {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
-          style={{ display: 'block', marginBottom: '1rem', padding: '0.5rem' }}
+          style={{ display: 'block', marginBottom: '1rem', padding: '0.5rem', width: '300px' }}
         />
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Войти</button>
       </form>
+      <p>
+        <Link href="/">
+          <a>← На главную</a>
+        </Link>
+      </p>
     </div>
   );
 }
