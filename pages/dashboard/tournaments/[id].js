@@ -1,3 +1,5 @@
+// pages/dashboard/tournaments/[id].js
+
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -5,7 +7,7 @@ import Link from 'next/link';
 
 const API_URL = 'https://directus-4fzx.onrender.com';
 
-export default function TournamentDetails() {
+export default function TournamentPage() {
   const router = useRouter();
   const { id } = router.query;
 
@@ -15,20 +17,26 @@ export default function TournamentDetails() {
   const [player2, setPlayer2] = useState('');
   const [score, setScore] = useState('');
 
-  // Загружаем игроков и матчи турнира
   useEffect(() => {
+    if (!id) return;
+
     const token = localStorage.getItem('directus_token');
-    if (!token || !id) return;
+    if (!token) return;
 
-    // Получаем игроков
-    axios.get(`${API_URL}/items/players`)
-      .then(res => setPlayers(res.data.data));
-
-    // Получаем матчи + вложенные имена игроков
-    axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
-      headers: { Authorization: `Bearer ${token}` }
+    // Загрузка игроков
+    axios.get(`${API_URL}/items/players`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .then(res => setMatches(res.data.data));
+    .then(res => setPlayers(res.data.data))
+    .catch(err => console.error('Ошибка загрузки игроков:', err));
+
+    // Загрузка матчей с именами игроков
+    axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then(res => setMatches(res.data.data))
+    .catch(err => console.error('Ошибка загрузки матчей:', err));
+
   }, [id]);
 
   const addMatch = async () => {
@@ -40,29 +48,29 @@ export default function TournamentDetails() {
     const token = localStorage.getItem('directus_token');
 
     try {
-      // Добавляем матч
-      await axios.post(`${API_URL}/items/matches`, {
+      const payload = {
         tournament: parseInt(id),
         player1: parseInt(player1),
         player2: parseInt(player2),
-        score
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+        score,
+      };
+
+      await axios.post(`${API_URL}/items/matches`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Очищаем форму
-      setScore('');
+      // Перезагрузка матчей после добавления
+      const res = await axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setMatches(res.data.data);
       setPlayer1('');
       setPlayer2('');
-
-      // Перезагружаем список матчей
-      const res = await axios.get(`${API_URL}/items/matches?filter[tournament][_eq]=${id}&fields=*,player1.name,player2.name`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMatches(res.data.data);
+      setScore('');
     } catch (err) {
-      alert('Ошибка добавления матча');
-      console.error(err);
+      console.error("Ошибка добавления матча:", err.response?.data?.errors || err.message);
+      alert('Ошибка добавления матча. Подробности в консоли.');
     }
   };
 
@@ -70,49 +78,42 @@ export default function TournamentDetails() {
     <div style={{ padding: '2rem' }}>
       <h1>Управление турниром #{id}</h1>
 
-      <p><Link href="/dashboard"><a>← Назад в панель</a></Link></p>
-      <p><Link href="/"><a>🏠 На главную</a></Link></p>
+      <p><Link href="/dashboard"><a>← Назад в панель организатора</a></Link></p>
 
       <h2>Добавить матч</h2>
       <div>
-        <select value={player1} onChange={e => setPlayer1(e.target.value)}>
-          <option value="">Игрок 1</option>
+        <select value={player1} onChange={(e) => setPlayer1(e.target.value)}>
+          <option value="">Выберите Игрока 1</option>
           {players.map(p => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
 
-        <span style={{ margin: '0 1rem' }}>vs</span>
-
-        <select value={player2} onChange={e => setPlayer2(e.target.value)}>
-          <option value="">Игрок 2</option>
+        <select value={player2} onChange={(e) => setPlayer2(e.target.value)}>
+          <option value="">Выберите Игрока 2</option>
           {players.map(p => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-
-        <br /><br />
 
         <input
           type="text"
-          placeholder="Счёт (например, 6:3 6:2)"
+          placeholder="Счёт (например: 6-3, 6-4)"
           value={score}
-          onChange={e => setScore(e.target.value)}
+          onChange={(e) => setScore(e.target.value)}
         />
 
-        <br /><br />
-
-        <button onClick={addMatch}>➕ Добавить матч</button>
+        <button onClick={addMatch}>Добавить матч</button>
       </div>
 
-      <h2 style={{ marginTop: '2rem' }}>Список матчей</h2>
+      <h2>Список матчей</h2>
       {matches.length === 0 ? (
         <p>Матчи пока не добавлены</p>
       ) : (
         <ul>
-          {matches.map(m => (
-            <li key={m.id}>
-              {m.player1?.name || 'Игрок 1'} vs {m.player2?.name || 'Игрок 2'} — <b>{m.score}</b>
+          {matches.map(match => (
+            <li key={match.id}>
+              {match.player1?.name || 'Игрок 1'} vs {match.player2?.name || 'Игрок 2'} — Счёт: {match.score}
             </li>
           ))}
         </ul>
