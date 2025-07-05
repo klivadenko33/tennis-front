@@ -1,4 +1,23 @@
 // pages/dashboard.js
+
+import Link from 'next/link';
+
+export default function Dashboard() {
+  return (
+    <div style={{ padding: '2rem' }}>
+      <h1>Панель организатора</h1>
+      <p>
+        <Link href="/">
+          <a>← На главную</a>
+        </Link>
+      </p>
+
+      {/* Сюда дальше добавим список турниров */}
+    </div>
+  );
+}
+
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
