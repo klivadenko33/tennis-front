@@ -1,43 +1,91 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import axios from 'axios';
 
-import Link from 'next/link';
+export default function DashboardPage() {
+  const router = useRouter();
+  const [tokenChecked, setTokenChecked] = useState(false);
+  const [tournaments, setTournaments] = useState([]);
 
-export default function Dashboard() {
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Дашборд организатора</h1>
-      
-      <nav className="mb-6">
-        <Link href="/dashboard/add-player">
-          <a className="text-blue-600 hover:underline mr-4">Добавить игрока</a>
-        </Link>
-        <Link href="/dashboard/add-tournament">
-          <a className="text-blue-600 hover:underline mr-4">Добавить турнир</a>
-        </Link>
-        <Link href="/dashboard/add-match">
-          <a className="text-blue-600 hover:underline">Добавить матч</a>
-        </Link>
-      </nav>
+  useEffect(() => {
+    const token = localStorage.getItem('directus_token');
 
-      {/* Тут можно вывести список турниров, игроков и т.д. */}
-      <p>Выберите действие слева или из меню выше.</p>
-    </div>
-  );
-}
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
 
-export async function getServerSideProps({ req }) {
-  const token = req.cookies['auth-token'];
-
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
+    const fetchTournaments = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/tournaments`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setTournaments(response.data.data);
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+      } finally {
+        setTokenChecked(true);
+      }
     };
+
+    fetchTournaments();
+  }, [router]);
+
+  if (!tokenChecked) {
+    return <div className="p-4">Завантаження...</div>;
   }
 
-  // Можно при желании передать данные в props, например, список турниров и т.п.
-  return {
-    props: {}, 
-  };
+  return (
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-4">Панель організатора</h1>
+
+      <div className="mb-4">
+        <a
+          href="/"
+          className="text-blue-600 hover:underline"
+        >
+          ← Назад на головну
+        </a>
+      </div>
+
+      <div className="mb-6">
+        <a
+          href="/dashboard/add-tournament"
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mr-4"
+        >
+          + Новий турнір
+        </a>
+
+        <a
+          href="/dashboard/add-player"
+          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+        >
+          + Новий гравець
+        </a>
+      </div>
+
+      <h2 className="text-xl font-semibold mb-2">Список турнірів:</h2>
+      {tournaments.length === 0 ? (
+        <p>Поки немає турнірів.</p>
+      ) : (
+        <ul className="space-y-2">
+          {tournaments.map((tournament) => (
+            <li key={tournament.id}>
+              <a
+                href={`/dashboard/tournament/${tournament.id}`}
+                className="text-blue-500 hover:underline"
+              >
+                {tournament.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
