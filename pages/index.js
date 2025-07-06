@@ -1,37 +1,20 @@
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    // Проверяем наличие токена авторизации в localStorage
-    const token = localStorage.getItem('authToken');
-    setIsLoggedIn(!!token);
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <h1 className="text-3xl font-bold mb-6">Добро пожаловать на сайт теннисного клуба</h1>
-
-      <nav className="flex flex-col gap-4 text-lg">
-        {isLoggedIn ? (
-          <Link href="/dashboard">
-            <a className="text-blue-600 hover:underline">Перейти в Дашборд</a>
-          </Link>
-        ) : (
-          <Link href="/login">
-            <a className="text-blue-600 hover:underline">Вход для организатора</a>
-          </Link>
-        )}
-
-        <Link href="/tournaments">
-          <a className="text-blue-600 hover:underline">Турниры</a>
-        </Link>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4">
+      <h1 className="text-4xl font-bold mb-8">Турнирный рейтинг</h1>
+      <div className="space-y-4">
         <Link href="/players">
-          <a className="text-blue-600 hover:underline">Игроки</a>
+          <a className="block bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition">Игроки</a>
         </Link>
-      </nav>
+        <Link href="/tournaments">
+          <a className="block bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition">Турниры</a>
+        </Link>
+        <Link href="/adminka">
+          <a className="block bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition">Админка</a>
+        </Link>
+      </div>
     </div>
-  );
+  )
 }
